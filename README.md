@@ -445,16 +445,10 @@ In this lab, the user validates canary deployments by observing traffic distribu
 ## Walkthrough
 
 ### Step 1: Observe Canary Traffic
-1. While the canary deployment is ongoing, navigate to the web page
-
-3. From the left hand side menu navigate to project settings
-4. Select **project variables**
-5. The url can exist within the **lab_endpoint** variable 
-<img width="1692" height="302" alt="image" src="https://github.com/user-attachments/assets/5a215845-eadc-479d-9c81-5185bf039243" />
-
-6. Drill down to the **Distribution Test** tab
-7. Click the **Start** button to run traffic generation
-8. Observe the traffic distribution between canary and stable instances
+1. While the canary deployment is ongoing, navigate to the web page. The URL is in the **lab_endpoint** project variable, as in Lab 4
+2. Drill down to the **Distribution Test** tab
+3. Click the **Start** button to run traffic generation
+4. Observe the traffic distribution between canary and stable instances
 
 ---
 
@@ -499,27 +493,17 @@ In this lab, the user creates and applies policies as code to enable governance 
 1. From the secondary menu, select **Project Settings**
 2. Under Security & Governance Select **Policies**
 3. Click **New Policy**
-4. Enter new policy name
-6. Click Apply
-7. From the suggested list , select **Pipeline - Approval** and click **Use This Sample**
-8. Click **Save**
+4. Enter the policy name below and click **Apply**
+5. From the suggested list, select **Pipeline - Approval** and click **Use This Sample**. It denies any **Deployment** stage that does not contain a **Harness Approval** step
+6. Click **Save**
 
 | Input      | Value     | Notes |
 | ---------- | ----------------------  | ----- |
 | Policy Name | <pre>`Production Approvals`</pre> ||
 
 
-10. Click **Policy Sets** 
-11. Click **New Policy Set**
-12. Click **Continue**
-13. Click **+Add Policy**
-14. Select **Production Approvals**
-15. Select **Error & Exit** for failure strategy
-16. Click **Apply**
-17. Click **Finish**
-18. Toggle **enabled** for the **
+7. Click **Policy Sets** and then **New Policy Set**, set the values according to the table below and click **Continue**
 
-Set the values according to the table below and confirm
 | Input      | Value     | Notes |
 | ---------- | ----------------------  | ----- |
 | Policy Set Name | <pre>`Production Policies`</pre> ||
@@ -527,12 +511,14 @@ Set the values according to the table below and confirm
 | Trigger Event | On Run ||
 | Failure Strategy | Error & exit ||
 
+8. Click **+ Add Policy**, select **Production Approvals**, select **Error & Exit** for the failure strategy and click **Apply**
+9. Click **Finish** and make sure the **Enforced** toggle of **Production Policies** is on
+
 ---
 
 ### Step 2: Test the Policy
 1. Open your pipeline
-2. Try to run the pipeline and note the failure due to lack of an approval stage
-3. Click **Save** and note the failure due to lack of an approval stage
+2. Try to run the pipeline and note the failure: the deployment stages do not have a **Harness Approval** step. The policy set evaluates **On Run**, so saving still works
 
 ---
 
@@ -552,7 +538,7 @@ Set the values according to the table below and confirm
 **Backend Stage**
 1. Navigate to the **backend** stage
 2. Before the canary deployment block, add a **Harness Approval** step with the same configuration
-3. Click **Save** and note that the save succeeds without any policy failure
+3. Click **Save** and then **Run**. The policy passes and the pipeline starts
 
 ---
 
@@ -595,7 +581,7 @@ In regulated environments you can't ship to production without following change 
 4. Select your most recent pipeline save, click **Apply** and then click **Test**. What do you think will happen?
 
 > [!NOTE]
-> The Harness Approval steps added in Lab 6 sit inside the deployment stages. Change policy requires an approval stage **before** any deployment stage, so the test fails. Failure is success, the policy is working as designed
+> Lab 6 required a Harness Approval step **inside** each deployment stage. Change policy goes further and requires an approval stage **before** any deployment stage, so the test fails. Failure is success, the policy is working as designed
 
 ![Policy as Code](images/lab7-opa.gif "Policy as Code")
 ![Policy test result](images/lab7-policy-test.png "Policy test result")

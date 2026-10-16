@@ -30,7 +30,7 @@ Welcome to the hands-on workshop prepared for **Tokio Marine North America Servi
 - [Lab 10: Governance / Policy as Code (Advanced)](#lab-10-governance--policy-as-code-advanced)
 
 > [!NOTE]
-> **Pre-provisioned for you:** your project already contains a **SNOW Approval** stage template, **ServiceNow Close Ticket**, **ServiceNow Close Failed** and **Change Verified** step templates, and the **Approval Required**, **Production Guardrail** and **Change Verified** policies. They all use the shared `workshop-snow` ServiceNow connector.
+> **Pre-provisioned for you:** your project already contains a **SNOW Approval** stage template, **ServiceNow Close Ticket**, **ServiceNow Close Failed** and **Change Verified** step templates, and the **Approval Required**, **Production Guardrail** and **Change Verified** policies. They all use the project-level `servicenow` ServiceNow connector (Project Settings → Connectors).
 
 ---
 

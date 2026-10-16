@@ -1,3 +1,39 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="images/tmnas-logo-white.png">
+    <img src="images/tmnas-logo.png" alt="Tokio Marine North America Services" width="320">
+  </picture>
+</p>
+
+<h1 align="center">TMNAS &times; Harness DevSecOps Workshop</h1>
+
+<p align="center">
+  Continuous Integration &bull; DevSecOps &bull; Continuous Delivery &bull; Continuous Verification &bull; Governance &bull; <b>ServiceNow Change Management</b> &bull; Chaos Engineering
+</p>
+
+---
+
+Welcome to the hands-on workshop prepared for **Tokio Marine North America Services (TMNAS)**. Over the following labs you will build an end-to-end delivery pipeline for a sample application, harden it with security scanning, derisk releases with canary deployments and continuous verification, put it under change control with **policy as code** and **ServiceNow change requests**, and prove it rolls back on its own when chaos strikes - exactly the guardrails a regulated insurance business needs, without slowing delivery down.
+
+# Table of Contents
+
+- [Lab Pre-read](#lab-pre-read)
+- [Lab 1: Build](#lab-1-build)
+- [Lab 2: DevSecOps](#lab-2-devsecops)
+- [Lab 3: Continuous Deploy - Frontend](#lab-3-continuous-deploy---frontend)
+- [Lab 4: Continuous Deploy - Backend](#lab-4-continuous-deploy---backend)
+- [Lab 5: Validate Release](#lab-5-validate-release)
+- [Lab 6: Governance / Policy as Code](#lab-6-governance--policy-as-code)
+- [Lab 7: Governance & Change Management with ServiceNow](#lab-7-governance--change-management-with-servicenow)
+- [Lab 8: Production Guardrails](#lab-8-production-guardrails)
+- [Lab 9: Resilience Testing & Automated Rollback](#lab-9-resilience-testing--automated-rollback)
+- [Lab 10: Governance / Policy as Code (Advanced)](#lab-10-governance--policy-as-code-advanced)
+
+> [!NOTE]
+> **Pre-provisioned for you:** your project already contains a **SNOW Approval** stage template, **ServiceNow Close Ticket**, **ServiceNow Close Failed** and **Change Verified** step templates, and the **Approval Required**, **Production Guardrail** and **Change Verified** policies. They all use the shared `workshop-snow` ServiceNow connector.
+
+---
+
 ## Lab pre-read
 
 ### Changing project
@@ -1060,6 +1096,9 @@ deny[sprintf("Node OSS Can't contain any critical vulnerability '%d'", [input.NO
 ### Step 4: Test the Policy
 1. Save the pipeline and execute
 2. Note that the pipeline fails at the policy evaluation step due to critical vulnerabilities being found by OWASP
+
+> [!TIP]
+> The change request raised for this run stays in **Implement**. Cancel it in ServiceNow, or add the **ServiceNow Close Failed** template to the frontend rollback steps as you did for the backend in Lab 9.
 
 ---
 

@@ -80,7 +80,6 @@ In this lab, the user sets up a CI pipeline that runs source code tests, builds 
 | ---------- | ----------------------  | ----- |
 | Name       | <pre>`workshop`</pre>||
 | How do you want to setup your pipeline | Inline | This indicates that Harness (rather than Git) will be the source of truth for the pipeline |
-|`                `|`                            `|`                `|
 
 ---
 
@@ -93,7 +92,6 @@ In this lab, the user sets up a CI pipeline that runs source code tests, builds 
 | Stage Name | <pre>`Build`</pre>||
 | Clone Codebase | Enabled ||
 | Repository Name | <pre>`harness-devsecops`</pre>||
-|`                `|`                            `|`                `|
 
 ---
 
@@ -104,7 +102,6 @@ In this lab, the user sets up a CI pipeline that runs source code tests, builds 
 | Input      | Value     | Notes |
 | ---------- | ----------------------  | ----- |
 | Infrastructure | Cloud ||
-|`                `|`                            `|`                `|
 
 ---
 
@@ -119,7 +116,6 @@ Navigate to the **Execution** tab and add the following steps:
 | ---------- | ----------------------  | ----- |
 | Name | <pre>`Run Tests With Intelligence`</pre>||
 | Command | <pre>`pip install pytest & cd ./python-tests`</pre>| The GitHub repo is a monorepo with application(s) and configuration in the same repo. Therefore we need to navigate to the application subfolder. |
-|`                `|`                            `|`                `|
 
 3. Click **Apply Changes**
 
@@ -130,7 +126,6 @@ Navigate to the **Execution** tab and add the following steps:
 | Input      | Value     | Notes |
 | ---------- | ----------------------  | ----- |
 | Name | <pre>`Compile`</pre>||
-|`                `|`                            `|`                `|
 
 3. Click **Apply Changes**
 
@@ -147,7 +142,6 @@ Navigate to the **Execution** tab and add the following steps:
 | **Optional Configuration** |||
 | Dockerfile | <pre>`/harness/frontend-app/harness-webapp/Dockerfile`</pre>| This tells Harness where the Dockerfile is for building the app |
 | Context | <pre>`/harness/frontend-app/harness-webapp`</pre>| This tells from where to run the instructions included in the Dockerfile |
-|`                `|`                            `|`                `|
 
 3. Click **Apply Changes**
 
@@ -160,7 +154,6 @@ Navigate to the **Execution** tab and add the following steps:
 | Input      | Value     | Notes |
 | ---------- | ----------------------  | ----- |
 | Branch Name | <pre>`main`</pre>| Prepopulated |
-|`                `|`                            `|`                `|
 
 > [!WARNING]
 > Pipeline execution is rejected by the policy engine, let's create a compliant pipeline
@@ -195,7 +188,6 @@ In this lab, the security team has implemented orchestration of **Fortify** and 
 | Input      | Value     | Notes |
 | ---------- | ----------------------  | ----- |
 | Name | <pre>`Fortify`</pre>||
-|`                `|`                            `|`                `|
 
 4. Click **Apply Changes**
 
@@ -209,7 +201,6 @@ In this lab, the security team has implemented orchestration of **Fortify** and 
 | Input      | Value     | Notes |
 | ---------- | ----------------------  | ----- |
 | Name | <pre>`OWASP`</pre>||
-|`                `|`                            `|`                `|
 
 4. Click **Apply Changes**
 
@@ -221,7 +212,6 @@ In this lab, the security team has implemented orchestration of **Fortify** and 
 | Input      | Value     | Notes |
 | ---------- | ----------------------  | ----- |
 | Branch Name | <pre>`main`</pre>||
-|`                `|`                            `|`                `|
 
 2. After the **Build and Push** stage is complete, navigate to the **Security Tests** tab to see the deduplicated, normalized, and prioritized list of vulnerabilities discovered across your scanners
 
@@ -259,7 +249,6 @@ In this lab, the user extends the existing pipeline to take the artifact built i
 | ---------- | ----------------------  | ----- |
 | Stage Name | <pre>`frontend`</pre>||
 | Deployment Type | Kubernetes ||
-|`                `|`                            `|`                `|
 
 ---
 
@@ -285,7 +274,6 @@ In this lab, the user extends the existing pipeline to take the artifact built i
 | Artifact Source Identifier | <pre>`frontend`</pre>||
 | Image Path | <pre>`nikpap/harness-workshop`</pre>||
 | Tag | <pre>`<+variable.username>-<+pipeline.sequenceId>`</pre>| Select value, then click on the pin and select expression and paste the value |
-|`                `|`                            `|`                `|
 
 2. Click **Save** to close the service window and then click **Continue**
 
@@ -300,7 +288,6 @@ The target infrastructure has been pre-created. The application will be deployed
 | Input      | Value     | Notes |
 | ---------- | ----------------------  | ----- |
 | Name | <pre>`prod`</pre>| Make sure to select the environment and infrastructure definition |
-|`                `|`                            `|`                `|
 
 3. Click **- Select -** on the **Specify Infrastructure** input box
 4. From the dropdown select **k8s**
@@ -308,7 +295,6 @@ The target infrastructure has been pre-created. The application will be deployed
 | Input      | Value     | Notes |
 | ---------- | ----------------------  | ----- |
 | Name | <pre>`k8s`</pre>||
-|`                `|`                            `|`                `|
 
 5. Click **Continue**
 
@@ -327,7 +313,6 @@ The target infrastructure has been pre-created. The application will be deployed
 | Input      | Value     | Notes |
 | ---------- | ----------------------  | ----- |
 | Branch Name | <pre>`main`</pre>||
-|`                `|`                            `|`                `|
 
 ---
 
@@ -361,7 +346,6 @@ In this lab, the user adds a backend deployment stage using a canary deployment 
 | ---------- | ----------------------  | ----- |
 | Stage Name | <pre>`backend`</pre>||
 | Deployment Type | Kubernetes ||
-|`                `|`                            `|`                `|
 
 ---
 
@@ -372,7 +356,6 @@ In this lab, the user adds a backend deployment stage using a canary deployment 
 | Input      | Value     | Notes |
 | ---------- | ----------------------  | ----- |
 | Name | <pre>`backend`</pre>||
-|`                `|`                            `|`                `|
 
 3. Click **Apply Selected** and then click **Continue**
 
@@ -395,7 +378,6 @@ The target infrastructure has been pre-created and was used in the previous stag
 | ---------- | ----------------------  | ----- |
 | Name | <pre>`Approval`</pre>||
 | User Groups | All Project Users | Select project to see the "All Project Users" option |
-|`                `|`                            `|`                `|
 
 3. Click **Apply Changes**
 
@@ -407,7 +389,6 @@ The target infrastructure has been pre-created and was used in the previous stag
 | Input      | Value     | Notes |
 | ---------- | ----------------------  | ----- |
 | Branch Name | <pre>`main`</pre>||
-|`                `|`                            `|`                `|
 
 2. While the canary deployment is ongoing and waiting for approval, navigate to the web page and see if you can spot the canary (use the check release button)
 3. From the left hand side menu navigate to project settings
@@ -432,14 +413,12 @@ The target infrastructure has been pre-created and was used in the previous stag
 | Name | <pre>`Verify`</pre>||
 | Continuous Verification Type | Canary ||
 | Duration | 5 min ||
-|`                `|`                            `|`                `|
 
 5. Click **Save** and then click **Run** to execute the pipeline
 
 | Input      | Value     | Notes |
 | ---------- | ----------------------  | ----- |
 | Branch Name | <pre>`main`</pre>||
-|`                `|`                            `|`                `|
 
 ---
 
@@ -528,7 +507,6 @@ In this lab, the user creates and applies policies as code to enable governance 
 | Input      | Value     | Notes |
 | ---------- | ----------------------  | ----- |
 | Policy Name | <pre>`Production Approvals`</pre> ||
-|`                `|`                            `|`                `|
 
 
 10. Click **Policy Sets** 
@@ -548,7 +526,6 @@ Set the values according to the table below and confirm
 | Entity Type | Pipeline ||
 | Trigger Event | On Run ||
 | Failure Strategy | Error & exit ||
-|`                `|`                            `|`                `|
 
 ---
 
@@ -569,7 +546,6 @@ Set the values according to the table below and confirm
 | Step Name | <pre>`Approval`</pre>||
 | Type of Approval | Harness Approval ||
 | User Groups | All Project Users ||
-|`                `|`                            `|`                `|
 
 3. Click **Apply Changes**
 
@@ -615,7 +591,6 @@ In regulated environments you can't ship to production without following change 
 | Organization | \<your org\> ||
 | Project | \<your project\> ||
 | Action | On Save ||
-|`                `|`                            `|`                `|
 
 4. Select your most recent pipeline save, click **Apply** and then click **Test**. What do you think will happen?
 
@@ -652,7 +627,6 @@ In regulated environments you can't ship to production without following change 
 | Input      | Value     | Notes |
 | ---------- | ----------------------  | ----- |
 | Stage Name | <pre>`ServiceNow Approval`</pre>| The name must match exactly. The close templates reference this stage to find the change number |
-|`                `|`                            `|`                `|
 
 ![Stage name](images/lab7-stage-name.png "Stage name")
 
@@ -662,7 +636,6 @@ In regulated environments you can't ship to production without following change 
 | ---------- | ----------------------  | ----- |
 | Create Ticket | ServiceNow Create | Raises a Normal change request with the pipeline name, execution number, triggering user, execution URL, justification, implementation, backout and test plans |
 | Approval | ServiceNow Approval | Polls the change request every 30s. Approves when **State = Implement**, rejects when **State = Canceled** |
-|`                `|`                            `|`                `|
 
 ![Template overview](images/lab7-overview.png "Template overview")
 
@@ -676,7 +649,6 @@ In regulated environments you can't ship to production without following change 
 | Input      | Value     | Notes |
 | ---------- | ----------------------  | ----- |
 | Name | <pre>`Close Ticket`</pre>| Sets the change to **Closed** with close code **Successful** and links the execution in the close notes |
-|`                `|`                            `|`                `|
 
 ![Close Ticket](images/lab7-close-name.png "Close Ticket")
 
@@ -692,7 +664,6 @@ In regulated environments you can't ship to production without following change 
 | Input      | Value     | Notes |
 | ---------- | ----------------------  | ----- |
 | Branch Name | <pre>`main`</pre>||
-|`                `|`                            `|`                `|
 
 2. The pipeline pauses on the **ServiceNow Approval** stage. The change request has already been raised on your behalf and moved to **Scheduled**
 
@@ -782,7 +753,6 @@ The **Change Verified Policy** denies the step if the change number doesn't star
 | Input      | Value     | Notes |
 | ---------- | ----------------------  | ----- |
 | Name | <pre>`Change Verified`</pre>||
-|`                `|`                            `|`                `|
 
 ![Add Change Verified](images/lab8-add-step.gif "Add Change Verified")
 ![frontend stage](images/lab8-frontend-step.png "frontend stage")
@@ -850,7 +820,6 @@ Continuous verification from Lab 4 compares the canary against the stable pods. 
 | Infrastructure Type | Kubernetes (Direct Connection) ||
 | Connector | k8s-prod ||
 | Namespace | <pre>`devsecops-<project_id>`</pre>| The namespace your frontend and backend are deployed to |
-|`                `|`                            `|`                `|
 
 ![Create the chaos infrastructure](images/lab9-chaos-new-infra.png "Create the chaos infrastructure")
 
@@ -869,7 +838,6 @@ Continuous verification from Lab 4 compares the canary against the stable pods. 
 | Method | GET ||
 | Criteria | == ||
 | Response Code | <pre>`200`</pre>||
-|`                `|`                            `|`                `|
 
 3. Move to the next tab **Run Properties**
 
@@ -879,7 +847,6 @@ Continuous verification from Lab 4 compares the canary against the stable pods. 
 | Interval | <pre>`2s`</pre>||
 | Attempt | <pre>`5`</pre>||
 | Initial Delay | <pre>`5s`</pre>||
-|`                `|`                            `|`                `|
 
 4. Click **Next** and then **Create Probe**
 
@@ -894,7 +861,6 @@ Continuous verification from Lab 4 compares the canary against the stable pods. 
 | Input      | Value     | Notes |
 | ---------- | ----------------------  | ----- |
 | Name | <pre>`pod-memory`</pre>||
-|`                `|`                            `|`                `|
 
 3. Select **Kubernetes** and click **Select a resilience test infrastructure**
 4. Select the **prod** environment, then the **k8s-chaos** infrastructure, and click **Apply**. Infrastructures without chaos enabled are shown as **Chaos Not Enabled** and can't be selected
@@ -912,7 +878,6 @@ Continuous verification from Lab 4 compares the canary against the stable pods. 
 | Target Workload Namespace | <pre>`devsecops-<project_id>`</pre>| Select the namespace from the dropdown |
 | Target Workload Names | <pre>`backend-<project_id>-deployment-canary`</pre>| The canary only exists while the pipeline runs, so type the name and select it |
 | Target Workload Labels | Leave empty ||
-|`                `|`                            `|`                `|
 
 ![Target the canary](images/lab9-chaos-target.png "Target the canary")
 
@@ -924,7 +889,6 @@ Continuous verification from Lab 4 compares the canary against the stable pods. 
 | Memory Consumption | <pre>`300`</pre>| MB, well above the 150MB Pod Memory threshold of the backend monitored service |
 | Number of workers | <pre>`1`</pre>||
 | Pod affected percentage | <pre>`100`</pre>||
-|`                `|`                            `|`                `|
 
 ![Tune the fault](images/lab9-chaos-tune.png "Tune the fault")
 
@@ -944,7 +908,6 @@ Continuous verification from Lab 4 compares the canary against the stable pods. 
 | ---------- | ----------------------  | ----- |
 | Sensitivity | Low | How sensitive the ML algorithms are to deviation from the baseline |
 | Duration | 10 min | Long enough for the memory hog to take effect |
-|`                `|`                            `|`                `|
 
 3. Select the **Advanced** tab of the Verify step. Under **Failure Strategy**, change the action for verification failures from **Manual Intervention** to **Rollback Stage** so a failed verification rolls back without waiting for a human
 4. Under the **Verify** step click on the plus icon to add a new step in parallel
@@ -955,7 +918,6 @@ Continuous verification from Lab 4 compares the canary against the stable pods. 
 | Name | <pre>`Chaos`</pre>||
 | Select Chaos Experiment | pod-memory ||
 | Expected Resilience Score | <pre>`50`</pre>||
-|`                `|`                            `|`                `|
 
 6. Click **Apply Changes**
 
@@ -975,7 +937,6 @@ Continuous verification from Lab 4 compares the canary against the stable pods. 
 | Input      | Value     | Notes |
 | ---------- | ----------------------  | ----- |
 | Name | <pre>`Close Failed Ticket`</pre>| Sets the change to **Closed** with close code **Unsuccessful** and links the failed execution in the close notes |
-|`                `|`                            `|`                `|
 
 ![Close Failed Ticket](images/lab9-close-name.png "Close Failed Ticket")
 
@@ -1040,7 +1001,6 @@ In this lab, the user creates an advanced policy that blocks deployments when cr
 | Input      | Value     | Notes |
 | ---------- | ----------------------  | ----- |
 | Name | <pre>`Runtime OWASP CVEs`</pre>||
-|`                `|`                            `|`                `|
 
 5. Click **Apply**
 6. Set the REGO policy to the following and click **Save**
@@ -1064,7 +1024,6 @@ deny[sprintf("Node OSS Can't contain any critical vulnerability '%d'", [input.NO
 | Entity Type | Custom ||
 | Event Evaluation | On Step ||
 | Policy to Evaluate | Runtime OWASP CVEs ||
-|`                `|`                            `|`                `|
 
 3. Click **Apply**
 4. Click **Finish**
@@ -1087,7 +1046,6 @@ deny[sprintf("Node OSS Can't contain any critical vulnerability '%d'", [input.NO
 | Entity Type | Custom ||
 | Policy Set | Criticals Not Allowed | Make sure to select the Project tab |
 | Payload | <pre>`{"NODE_OSS_CRITICAL_COUNT": <variable>}`</pre>| Set the field type to Expression, then replace `<variable>` with the OWASP output variable CRITICAL path |
-|`                `|`                            `|`                `|
 
 5. Click **Apply Changes**
 

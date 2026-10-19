@@ -8,12 +8,12 @@
 <h1 align="center">TMNAS &times; Harness DevSecOps Workshop</h1>
 
 <p align="center">
-  Continuous Integration &bull; DevSecOps &bull; Continuous Delivery &bull; Continuous Verification &bull; Governance &bull; <b>ServiceNow Change Management</b> &bull; Chaos Engineering
+  Continuous Integration &bull; DevSecOps &bull; Continuous Delivery &bull; Continuous Verification &bull; Governance &bull; <b>ServiceNow Change Management</b> &bull; Chaos Engineering &bull; AI Worker Agents
 </p>
 
 ---
 
-Welcome to the hands-on workshop prepared for **Tokio Marine North America Services (TMNAS)**. Over the following labs you will build an end-to-end delivery pipeline for a sample application, harden it with security scanning, derisk releases with canary deployments and continuous verification, put it under change control with **policy as code** and **ServiceNow change requests**, and prove it rolls back on its own when chaos strikes - exactly the guardrails a regulated insurance business needs, without slowing delivery down.
+Welcome to the hands-on workshop prepared for **Tokio Marine North America Services (TMNAS)**. Over the following labs you will build an end-to-end delivery pipeline for a sample application, harden it with security scanning, derisk releases with canary deployments and continuous verification, put it under change control with **policy as code** and **ServiceNow change requests**, prove it rolls back on its own when chaos strikes, and put an AI agent to work explaining why - exactly the guardrails a regulated insurance business needs, without slowing delivery down.
 
 # Table of Contents
 
@@ -27,10 +27,11 @@ Welcome to the hands-on workshop prepared for **Tokio Marine North America Servi
 - [Lab 7: Governance & Change Management with ServiceNow](#lab-7-governance--change-management-with-servicenow)
 - [Lab 8: Production Guardrails](#lab-8-production-guardrails)
 - [Lab 9: Resilience Testing & Automated Rollback](#lab-9-resilience-testing--automated-rollback)
-- [Lab 10: Governance / Policy as Code (Advanced)](#lab-10-governance--policy-as-code-advanced)
+- [Lab 10: AI Failure Analysis with a Worker Agent](#lab-10-ai-failure-analysis-with-a-worker-agent)
+- [Lab 11: Governance / Policy as Code (Advanced)](#lab-11-governance--policy-as-code-advanced)
 
 > [!NOTE]
-> **Pre-provisioned for you:** your project already contains a **SNOW Approval** stage template, **ServiceNow Close Ticket**, **ServiceNow Close Failed** and **Change Verified** step templates, and the **Approval Required**, **Production Guardrail** and **Change Verified** policies. They all use the project-level `servicenow` ServiceNow connector (Project Settings → Connectors).
+> **Pre-provisioned for you:** your project already contains a **SNOW Approval** stage template, **ServiceNow Close Ticket**, **ServiceNow Close Failed**, **ServiceNow Failure Analysis** and **Change Verified** step templates, and the **Approval Required**, **Production Guardrail** and **Change Verified** policies. They all use the project-level `servicenow` ServiceNow connector (Project Settings → Connectors).
 
 ---
 
@@ -965,7 +966,127 @@ Continuous verification from Lab 4 compares the canary against the stable pods. 
 | **Accurate Change Records** | ServiceNow always reflects the real outcome of a release, including automated rollbacks. |
 
 
-## Lab 10: Governance / Policy as Code (Advanced)
+## Lab 10: AI Failure Analysis with a Worker Agent
+
+## Key Outcomes
+- Create a custom Harness Worker Agent
+- Run an AI agent inside the pipeline when a release rolls back
+- Turn the agent's findings into an audited ServiceNow change record
+
+## Overview
+In Lab 9 Harness rolled the release back and closed the change as **Unsuccessful**, but the release manager still has to work out *why* it failed. In this lab the user creates a **Failure Analyst** Worker Agent that runs in the rollback steps, compares the canary's metrics in Prometheus with the stable pods' and publishes a root cause summary. The agent is read-only: a ServiceNow step writes its findings to the change request's work notes, so every action on the change record still comes from the pipeline.
+
+---
+
+## Walkthrough
+
+### Step 1: Create the Failure Analyst Agent
+1. From the module selection menu, under **AI**, select **Worker Agents**
+2. Select the **Custom** tab and click **+ Create**
+3. Set the following
+
+| Input      | Value     | Notes |
+| ---------- | ----------------------  | ----- |
+| Name | <pre>`Failure Analyst`</pre>| The identifier must be `failure_analyst` |
+| Description | <pre>`Explains why a release was rolled back`</pre>||
+
+4. Switch to the **YAML** tab and replace the definition with the following
+
+```yaml
+agent:
+  uses: harnessAI@1.0.0
+  with:
+    prompt: |
+      You are the Failure Analyst for a production release that Harness has just rolled back.
+      Find out why the release failed and explain it to the release manager who owns the ServiceNow change.
+
+      ## Release context
+      - Pipeline: <+pipeline.name> execution #<+pipeline.sequenceId> (<+pipeline.executionUrl>)
+      - Service: <+service.name> in environment <+env.name>
+      - Kubernetes namespace: <+infra.namespace>
+      - Change request: <+pipeline.stages.ServiceNow_Approval.spec.execution.steps.Create_Ticket.ticket.ticketNumber>
+      - Prometheus: <+variable.prometheus_endpoint>
+
+      ## Task
+      1. Use curl against the Prometheus HTTP API (/api/v1/query_range, last 20 minutes, 30s step) to fetch per pod in the namespace, for containers whose name starts with "backend":
+         - memory: container_memory_rss
+         - CPU: rate(container_cpu_usage_seconds_total[1m])
+         - restarts: kube_pod_container_status_restarts_total
+      2. The canary pod name contains "canary"; the other backend pods are the stable baseline. Compare the canary's peak and average values with the stable pods'.
+      3. Decide the most likely cause of the failed verification.
+
+      When you finish, output these variables:
+      - FAILURE_CATEGORY: one of MEMORY, CPU, CRASH, ERRORS, UNKNOWN
+      - FAILURE_SUMMARY: at most 3 sentences of plain text, without line breaks or double quotes, naming the affected pod, the metric, the canary and stable values, and the recommended next step
+
+      ## RULES
+      - You are read-only: never change anything in the cluster, Prometheus or Harness
+      - Only report numbers you retrieved; if Prometheus is unreachable or returns no data, say so and set FAILURE_CATEGORY to UNKNOWN
+      - Keep FAILURE_SUMMARY under 600 characters
+    connector: account.harnessAnthropic
+    allowed_domains: "harness.io,prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local"
+    max_turns: "30"
+```
+
+5. Click **Save agent**
+
+> [!NOTE]
+> The Harness expressions in the instructions are resolved when the pipeline runs, so the agent receives the real execution, namespace and change number. `account.harnessAnthropic` is the Harness-managed model connector, so no API keys are needed.
+
+---
+
+### Step 2: Run the Agent on Rollback
+1. From the module selection menu select **Continuous Delivery & GitOps** and open your pipeline
+2. In the **backend** stage **Execution**, toggle the **Rollback** view
+3. Hover between **Rolling Rollback** and **Close Failed Ticket**, click **+** and select **Add Step Group**
+
+| Input      | Value     | Notes |
+| ---------- | ----------------------  | ----- |
+| Name | <pre>`Failure Analysis`</pre>||
+| Enable container based execution | On | Worker Agents in CD stages run in a containerized step group |
+| Kubernetes Cluster | k8s-prod ||
+| Namespace | <pre>`devsecops-<project_id>`</pre>| The agent runs next to the application, so it can reach Prometheus |
+
+4. On the step group's **Advanced** tab, under **Failure Strategy**, set the action for **All Errors** to **Ignore** so the rollback always finishes, even if the agent can't
+5. Inside the step group click **Add Step**, select **Agents** in the right sidebar and then **Agent**
+
+| Input      | Value     | Notes |
+| ---------- | ----------------------  | ----- |
+| Name | <pre>`Failure Analyst`</pre>||
+| Agent | Failure Analyst ||
+| Version | Always use stable ||
+
+6. Click **Apply Changes**
+7. After the **Failure Analysis** step group, click **+**, select **Use template** and choose **ServiceNow Failure Analysis**
+
+| Input      | Value     | Notes |
+| ---------- | ----------------------  | ----- |
+| Name | <pre>`Record Failure Analysis`</pre>| Adds the agent's category and summary to the change request's work notes |
+
+8. On the step's **Advanced** tab set the **Failure Strategy** for **All Errors** to **Ignore**, so **Close Failed Ticket** still runs
+9. Apply the changes and **Save** the pipeline. The rollback steps are now **Canary Delete**, **Rolling Rollback**, **Failure Analysis**, **Record Failure Analysis** and **Close Failed Ticket**
+
+---
+
+### Step 3: Run and Review
+1. Click **Run**, approve the change in ServiceNow and approve the Harness Approval steps as before
+2. The chaos experiment from Lab 9 makes Verify fail and Harness rolls the stage back
+3. Expand the **Failure Analysis** step group and open **Failure Analyst**. The logs show the agent querying Prometheus and reasoning about the results, and the **Output** tab shows **FAILURE_CATEGORY** and **FAILURE_SUMMARY**
+4. Open the change request in ServiceNow. The **Notes** tab has a work note from the Failure Analyst with the root cause, and the change is **Closed** with close code **Unsuccessful**
+
+---
+
+## Value Callouts
+
+| Aspect | Description |
+| :--- | :--- |
+| **Faster Root Cause** | The release manager gets an explanation with evidence the moment a release fails, not hours later. |
+| **Agents Inside the Pipeline** | Worker Agents run in the same governed pipeline as every other step, with the same RBAC, audit trail and failure strategies. |
+| **Human-readable Change Records** | ServiceNow captures why a change failed, not just that it did. |
+| **Safe by Design** | The agent is read-only; only the pipeline's ServiceNow step changes the change record, and a failed agent never blocks the rollback. |
+
+
+## Lab 11: Governance / Policy as Code (Advanced)
 
 ## Key Outcomes
 - Block critical CVEs from reaching production  

@@ -8,12 +8,12 @@
 <h1 align="center">TMNAS &times; Harness DevSecOps Workshop</h1>
 
 <p align="center">
-  Continuous Integration &bull; DevSecOps &bull; Continuous Delivery &bull; Continuous Verification &bull; Governance &bull; <b>ServiceNow Change Management</b> &bull; Chaos Engineering &bull; AI Worker Agents
+  Continuous Integration &bull; DevSecOps &bull; Continuous Delivery &bull; Continuous Verification &bull; Governance &bull; <b>ServiceNow Change Management</b> &bull; AI Worker Agents
 </p>
 
 ---
 
-Welcome to the hands-on workshop prepared for **Tokio Marine North America Services (TMNAS)**. Over the following labs you will build an end-to-end delivery pipeline for a sample application, harden it with security scanning, derisk releases with canary deployments and continuous verification, put it under change control with **policy as code** and **ServiceNow change requests**, prove it rolls back on its own when chaos strikes, and put an AI agent to work explaining why - exactly the guardrails a regulated insurance business needs, without slowing delivery down.
+Welcome to the hands-on workshop prepared for **Tokio Marine North America Services (TMNAS)**. Over the following labs you will build an end-to-end delivery pipeline for a sample application, harden it with security scanning, derisk releases with canary deployments and continuous verification, put it under change control with **policy as code** and **ServiceNow change requests**, prove it rolls back on its own when a release fails, and put an AI agent to work explaining why - exactly the guardrails a regulated insurance business needs, without slowing delivery down.
 
 # Table of Contents
 
@@ -26,7 +26,7 @@ Welcome to the hands-on workshop prepared for **Tokio Marine North America Servi
 - [Lab 6: Governance / Policy as Code](#lab-6-governance--policy-as-code)
 - [Lab 7: Governance & Change Management with ServiceNow](#lab-7-governance--change-management-with-servicenow)
 - [Lab 8: Production Guardrails](#lab-8-production-guardrails)
-- [Lab 9: Resilience Testing & Automated Rollback](#lab-9-resilience-testing--automated-rollback)
+- [Lab 9: Automated Rollback](#lab-9-automated-rollback)
 - [Lab 10: AI Failure Analysis with a Worker Agent](#lab-10-ai-failure-analysis-with-a-worker-agent)
 - [Lab 11: Governance / Policy as Code (Advanced)](#lab-11-governance--policy-as-code-advanced)
 
@@ -464,7 +464,7 @@ In this lab, the user validates canary deployments by observing traffic distribu
 ---
 
 ### Bonus Activities
-- If verification fails, Harness defaults to manual intervention. Decide what happens next (rollback, ignore, etc.). Lab 9 makes a failed verification roll back automatically
+- If verification fails, Harness defaults to manual intervention. Decide what happens next (rollback, ignore, etc.). Lab 9 rolls a failed release back automatically
 - Add a canary rollout from 10% to 50% traffic and observe how this impacts traffic distribution
 
 ---
@@ -509,11 +509,11 @@ In this lab, the user creates and applies policies as code to enable governance 
 | ---------- | ----------------------  | ----- |
 | Policy Set Name | <pre>`Production Policies`</pre> ||
 | Entity Type | Pipeline ||
-| Trigger Event | On Run ||
-| Failure Strategy | Error & exit ||
+| On what event should the policy set be evaluated | On Run ||
 
-8. Click **+ Add Policy**, select **Production Approvals**, select **Error & Exit** for the failure strategy and click **Apply**
-9. Click **Finish** and make sure the **Enforced** toggle of **Production Policies** is on
+8. On **Policy evaluation criteria** click **+ Add Policy**, select **Production Approvals**, select **Error & Exit** for the failure strategy, click **Apply** and then **Continue**
+9. Skip the optional **Runtime Environment** step and click **Finish**
+10. New policy sets are not enforced by default. In the policy set list, turn on the **Enforced** toggle of **Production Policies**
 
 ---
 
@@ -657,7 +657,7 @@ In regulated environments you can't ship to production without following change 
 ![Change request created](images/lab7-create-ticket.png "Change request created")
 
 3. Click the **ServiceNow Approval** stage, select the **Approval** step and click the change number link in the step details to open the change request in a new tab
-4. Log in to the ServiceNow sandbox with the credentials provided by your instructor. Review the metadata the pipeline added to the change, then click **Implement** in the top right corner
+4. Log in to the ServiceNow sandbox at https://ven03172.service-now.com with the credentials provided by your instructor. Review the metadata the pipeline added to the change, then click **Implement** in the top right corner
 
 ![Change request](images/lab7-snow-change.png "Change request")
 ![Implement](images/lab7-snow-implement.png "Implement")
@@ -780,139 +780,38 @@ The **Change Verified Policy** denies the step if the change number doesn't star
 | **Evidence for Auditors** | The evaluated change number and approval status are stored with every execution. |
 
 
-## Lab 9: Resilience Testing & Automated Rollback
+## Lab 9: Automated Rollback
 
 ## Key Outcomes
-- Enable resilience testing on an existing deployment environment
-- Build a chaos experiment from an out-of-the-box fault and an HTTP probe
-- Run chaos against the canary in parallel with continuous verification
-- Roll back automatically and record the failed release in ServiceNow
+- Add a smoke test that gates the canary after it is verified
+- Roll back automatically when a release fails
+- Record the failed release in ServiceNow
 
 ## Overview
-Continuous verification from Lab 4 compares the canary against the stable pods. In this lab the user injects a memory hog into the backend canary while **Verify** runs, so verification catches the misbehaving canary and rolls the release back on its own. A rollback step then closes the ServiceNow change as **Unsuccessful**, so the change record always reflects what really happened.
+A canary only protects users if a failing release is stopped before it reaches them. In this lab the user adds a **Canary Smoke Test** to the backend stage, after **Verify** has checked the canary's metrics. The smoke test is set up to fail, so Harness rolls the stage back on its own and the release never reaches the stable deployment. A rollback step then closes the ServiceNow change as **Unsuccessful**, so the change record always reflects what really happened.
 
 ---
 
 ## Walkthrough
 
-### Step 1: Enable Chaos on Your Environment
-1. From the module selection menu select **Resilience Testing**
-2. From the left hand menu, go to **Project Settings** and select **Resilience Test Infrastructures**
-3. On the **Kubernetes (Harness Infrastructure)** tab click **+ New Infrastructure**, select the **prod** environment and click **Continue**
-4. Create the infrastructure with the following values and click **Save**
+### Step 1: Add the Canary Smoke Test
+Your project has been provisioned with a **Canary Smoke Test** step template.
 
-| Input      | Value     | Notes |
-| ---------- | ----------------------  | ----- |
-| Name | <pre>`k8s-chaos`</pre>| A chaos enabled infrastructure on the same cluster you deploy to |
-| Infrastructure Type | Kubernetes (Direct Connection) ||
-| Connector | k8s-prod ||
-| Namespace | <pre>`devsecops-<project_id>`</pre>| The namespace your frontend and backend are deployed to |
-
-![Create the chaos infrastructure](images/lab9-chaos-new-infra.png "Create the chaos infrastructure")
-
-5. Harness offers to onboard the infrastructure with service discovery. You do not need it for this lab, click **Exit**
-
----
-
-### Step 2: Create a Health Probe
-1. From **Project Settings** select **Resilience Test Probes** and click **+ New Probe**
-2. Select **Kubernetes** and then **HTTP Probe**
-
-| Input      | Value     | Notes |
-| ---------- | ----------------------  | ----- |
-| Name | <pre>`frontend-health`</pre>||
-| URL | The value of your **lab_endpoint** project variable | Your application's endpoint |
-| Method | GET ||
-| Criteria | == ||
-| Response Code | <pre>`200`</pre>||
-
-3. Move to the next tab **Run Properties**
-
-| Input      | Value     | Notes |
-| ---------- | ----------------------  | ----- |
-| Timeout | <pre>`20s`</pre>||
-| Interval | <pre>`2s`</pre>||
-| Attempt | <pre>`5`</pre>||
-| Initial Delay | <pre>`5s`</pre>||
-
-4. Click **Next** and then **Create Probe**
-
-![Probe created](images/lab9-chaos-probe.png "Probe created")
-
----
-
-### Step 3: Create the Experiment
-1. From the left hand menu, go to **Chaos Experiments**
-2. Select **+ New Experiment** and then **Create from scratch**
-
-| Input      | Value     | Notes |
-| ---------- | ----------------------  | ----- |
-| Name | <pre>`pod-memory`</pre>||
-
-3. Select **Kubernetes** and click **Select a resilience test infrastructure**
-4. Select the **prod** environment, then the **k8s-chaos** infrastructure, and click **Apply**. Infrastructures without chaos enabled are shown as **Chaos Not Enabled** and can't be selected
-
-![Select the chaos infrastructure](images/lab9-chaos-select-infra.png "Select the chaos infrastructure")
-
-5. Click **Next** to navigate to the experiment builder
-6. Click on the **+** and select **Add a fault**
-7. From the list of available faults select **Pod Memory Hog** and click **Add to Experiment**
-8. On the **Target Application** tab
-
-| Input      | Value     | Notes |
-| ---------- | ----------------------  | ----- |
-| Target Workload Kind | deployment ||
-| Target Workload Namespace | <pre>`devsecops-<project_id>`</pre>| Select the namespace from the dropdown |
-| Target Workload Names | <pre>`backend-<project_id>-deployment-canary`</pre>| The canary only exists while the pipeline runs, so type the name and select it |
-| Target Workload Labels | Leave empty ||
-
-![Target the canary](images/lab9-chaos-target.png "Target the canary")
-
-9. On the **Tune Fault** tab
-
-| Input      | Value     | Notes |
-| ---------- | ----------------------  | ----- |
-| Total Chaos Duration | <pre>`600`</pre>||
-| Memory Consumption | <pre>`300`</pre>| MB, well above the 150MB Pod Memory threshold of the backend monitored service |
-| Number of workers | <pre>`1`</pre>||
-| Pod affected percentage | <pre>`100`</pre>||
-
-![Tune the fault](images/lab9-chaos-tune.png "Tune the fault")
-
-10. Click **Apply Changes**
-11. Hover over the fault, select **Add a parallel node -> Add a probe**, choose **frontend-health** and click **Add to Experiment**, then **Apply Changes**
-12. Click **Save**
-
-![pod-memory experiment](images/lab9-chaos-experiment.png "pod-memory experiment")
-
----
-
-### Step 4: Run Chaos Alongside Verify
 1. From the module selection menu select **Continuous Delivery & GitOps** and open your pipeline
-2. In the **backend** stage, open the **Verify** step added in Lab 4 and update it
+2. In the **backend** stage, inside the **Canary Deployment** step group, hover between **Verify** and **Canary Delete**, click **+**, select **Use template** and choose **Canary Smoke Test**
 
 | Input      | Value     | Notes |
 | ---------- | ----------------------  | ----- |
-| Sensitivity | Low | How sensitive the ML algorithms are to deviation from the baseline |
-| Duration | 10 min | Long enough for the memory hog to take effect |
+| Name | <pre>`Canary Smoke Test`</pre>||
 
-3. Select the **Advanced** tab of the Verify step. Under **Failure Strategy**, change the action for verification failures from **Manual Intervention** to **Rollback Stage** so a failed verification rolls back without waiting for a human
-4. Under the **Verify** step click on the plus icon to add a new step in parallel
-5. Add a **Chaos** step with the following configuration
+3. Click **Apply Changes**. The template is a **Shell Script** step that runs on the delegate. It finds the canary pod in your `devsecops-<project_id>` namespace and smoke tests it, and its failure strategy is **Rollback Stage**, so a failed smoke test rolls the stage back without waiting for a human
 
-| Input      | Value     | Notes |
-| ---------- | ----------------------  | ----- |
-| Name | <pre>`Chaos`</pre>||
-| Select Chaos Experiment | pod-memory ||
-| Expected Resilience Score | <pre>`50`</pre>||
-
-6. Click **Apply Changes**
-
-![Verify and Chaos in parallel](images/lab9-chaos-studio.png "Verify and Chaos in parallel")
+> [!NOTE]
+> The template's `SIMULATE_FAILURE` environment variable is set to `true`, so the smoke test always fails with an HTTP 500 from the canary. That lets you see a rollback without breaking the application. Set it to `false` to let releases through again.
 
 ---
 
-### Step 5: Close the Change on Failure
+### Step 2: Close the Change on Failure
 1. In the **backend** stage **Execution**, toggle the **Rollback** view in the top right corner
 
 ![Rollback view](images/lab9-rollback-view.png "Rollback view")
@@ -927,29 +826,22 @@ Continuous verification from Lab 4 compares the canary against the stable pods. 
 
 ![Close Failed Ticket](images/lab9-close-name.png "Close Failed Ticket")
 
-3. Apply the changes and **Save** the pipeline
+3. On the step's **Advanced** tab, under **Conditional Execution**, select **Always execute this step**, so the change is closed even if an earlier rollback step fails
+4. Apply the changes and **Save** the pipeline
 
 ![Add Close Failed Ticket](images/lab9-rollback.gif "Add Close Failed Ticket")
 ![Rollback steps](images/lab9-rollback-studio.png "Rollback steps")
 
 ---
 
-### Step 6: Run and Review
+### Step 3: Run and Review
 1. Click **Run**, approve the change in ServiceNow as in Lab 7 and approve the Harness Approval steps
-2. Once the canary is deployed, Verify and Chaos run side by side. The memory hog pushes the canary pod's memory well above the stable pods'
-3. Verify compares the canary against the stable baseline and fails: **Pod Memory** is flagged **Unhealthy** on the canary node only
+2. Once the canary is deployed, **Verify** analyses its Prometheus metrics over a 5 minute window and passes. **Canary Smoke Test** then fails with `FAILED: simulated failure, the canary returned HTTP 500 from /api/orders`
+3. Harness rolls back the stage: **Canary Delete**, **Rolling Rollback** and then **Close Failed Ticket**. The release never reaches the stable deployment
 
-![Verification failed](images/lab9-chaos-verify-metrics.png "Verification failed")
+![Canary Smoke Test rollback](images/lab9-rollback-run.png "Canary Smoke Test rollback")
 
-4. Harness rolls back the stage: **Canary Delete**, **Rolling Rollback** and then **Close Failed Ticket**. The release never reaches the stable deployment
-
-![Rolled back](images/lab9-chaos-exec.png "Rolled back")
-
-5. Open the **Resilience Tests** tab of the execution. The resilience score is 100% because the **frontend-health** probe kept passing: the fault stayed on the backend canary and never reached users, while Verify stopped the release
-
-![Resilience Tests](images/lab9-chaos-resilience.png "Resilience Tests")
-
-6. Open the change request in ServiceNow. It is **Closed** with close code **Unsuccessful**, and the **Closure Information** tab links to the failed execution
+4. Open the change request in ServiceNow. It is **Closed** with close code **Unsuccessful**, and the **Closure Information** tab links to the failed execution
 
 ![Change closed unsuccessful](images/lab9-snow-unsuccessful.png "Change closed unsuccessful")
 ![Closure information](images/lab9-snow-closure.png "Closure information")
@@ -960,37 +852,30 @@ Continuous verification from Lab 4 compares the canary against the stable pods. 
 
 | Aspect | Description |
 | :--- | :--- |
-| **Resilience in the Pipeline** | Chaos experiments run as part of every release, not as a separate exercise. |
-| **Small Blast Radius** | The fault targets only the canary, so users stay on the healthy stable version. |
-| **Self-healing Releases** | Continuous verification detects the regression and rolls back without human intervention. |
+| **Small Blast Radius** | Only the canary is exposed to the failing release, so users stay on the healthy stable version. |
+| **Self-healing Releases** | A failed check rolls the release back without human intervention. |
 | **Accurate Change Records** | ServiceNow always reflects the real outcome of a release, including automated rollbacks. |
-
 
 ## Lab 10: AI Failure Analysis with a Worker Agent
 
 ## Key Outcomes
-- Create a custom Harness Worker Agent
+- Understand how a custom Harness Worker Agent is defined
 - Run an AI agent inside the pipeline when a release rolls back
 - Turn the agent's findings into an audited ServiceNow change record
 
 ## Overview
-In Lab 9 Harness rolled the release back and closed the change as **Unsuccessful**, but the release manager still has to work out *why* it failed. In this lab the user creates a **Failure Analyst** Worker Agent that runs in the rollback steps, compares the canary's metrics in Prometheus with the stable pods' and publishes a root cause summary. The agent is read-only: a ServiceNow step writes its findings to the change request's work notes, so every action on the change record still comes from the pipeline.
+In Lab 9 Harness rolled the release back and closed the change as **Unsuccessful**, but the release manager still has to work out *why* it failed. In this lab the user creates a **Failure Analyst** Worker Agent that runs in the rollback steps, uses the Harness MCP tools to diagnose the failed execution and publishes a root cause summary. The agent is read-only: a ServiceNow step writes its findings to the change request's work notes, so every action on the change record still comes from the pipeline.
 
 ---
 
 ## Walkthrough
 
-### Step 1: Create the Failure Analyst Agent
-1. From the module selection menu, under **AI**, select **Worker Agents**
-2. Select the **Custom** tab and click **+ Create**
-3. Set the following
+### Step 1: Review the Failure Analyst Agent
+Your project has been provisioned with a **Failure Analyst** Worker Agent (identifier `failure_analyst`).
 
-| Input      | Value     | Notes |
-| ---------- | ----------------------  | ----- |
-| Name | <pre>`Failure Analyst`</pre>| The identifier must be `failure_analyst` |
-| Description | <pre>`Explains why a release was rolled back`</pre>||
-
-4. Switch to the **YAML** tab and replace the definition with the following
+1. From the module selection menu select **AI Agents** and then **Worker Agents**
+2. Select the **Custom** tab and open **Failure Analyst**
+3. Switch to the **YAML** tab. The definition is the following
 
 ```yaml
 agent:
@@ -1001,77 +886,62 @@ agent:
       Find out why the release failed and explain it to the release manager who owns the ServiceNow change.
 
       ## Release context
-      - Pipeline: <+pipeline.name> execution #<+pipeline.sequenceId> (<+pipeline.executionUrl>)
-      - Service: <+service.name> in environment <+env.name>
-      - Kubernetes namespace: <+infra.namespace>
-      - Change request: <+pipeline.stages.ServiceNow_Approval.spec.execution.steps.Create_Ticket.ticket.ticketNumber>
-      - Prometheus: <+variable.prometheus_endpoint>
+      - Harness organization <org_id>, project <project_id>, pipeline workshop
+      - Service backend, environment prod, Kubernetes namespace devsecops-<project_id>
+      - The release you are analysing is the pipeline execution this step runs in. Its ID is in the HARNESS_EXECUTION_ID environment variable. If that variable is empty, use the most recent execution of the workshop pipeline
 
       ## Task
-      1. Use curl against the Prometheus HTTP API (/api/v1/query_range, last 20 minutes, 30s step) to fetch per pod in the namespace, for containers whose name starts with "backend":
-         - memory: container_memory_rss
-         - CPU: rate(container_cpu_usage_seconds_total[1m])
-         - restarts: kube_pod_container_status_restarts_total
-      2. The canary pod name contains "canary"; the other backend pods are the stable baseline. Compare the canary's peak and average values with the stable pods'.
-      3. Decide the most likely cause of the failed verification.
+      Use the Harness MCP tools only. You have a budget of 15 tool calls, so do not retry a call that fails.
+      1. Diagnose the execution and find the backend stage step that failed first: usually Canary Smoke Test (smoke tests run against the canary) or Verify (continuous verification of the canary against Prometheus metrics)
+      2. Read that step's failure message and logs: for Canary Smoke Test, which check failed and the error it returned, and for Verify, which metric breached its threshold
+      3. Decide the most likely cause of the failed release
 
       When you finish, output these variables:
       - FAILURE_CATEGORY: one of MEMORY, CPU, CRASH, ERRORS, UNKNOWN
-      - FAILURE_SUMMARY: at most 3 sentences of plain text, without line breaks or double quotes, naming the affected pod, the metric, the canary and stable values, and the recommended next step
+      - FAILURE_SUMMARY: at most 3 sentences of plain text, without line breaks or double quotes, naming the failed step, the evidence you found, and the recommended next step
 
       ## RULES
-      - You are read-only: never change anything in the cluster, Prometheus or Harness
-      - Only report numbers you retrieved; if Prometheus is unreachable or returns no data, say so and set FAILURE_CATEGORY to UNKNOWN
+      - You are read-only: never change, run, retry or abort anything in Harness
+      - Only report evidence you retrieved; if you could not retrieve any, say so and set FAILURE_CATEGORY to UNKNOWN
       - Keep FAILURE_SUMMARY under 600 characters
+      - Always output both variables, even if your analysis is incomplete
     connector: account.harnessAnthropic
-    allowed_domains: "harness.io,prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local"
+    allowed_domains: harness.io
     max_turns: "30"
 ```
 
-5. Click **Save agent**
+4. Close the agent without making changes
 
 > [!NOTE]
-> The Harness expressions in the instructions are resolved when the pipeline runs, so the agent receives the real execution, namespace and change number. `account.harnessAnthropic` is the Harness-managed model connector, so no API keys are needed.
+> Agent instructions only resolve `<+inputs.*>`, `<+trigger.*>` and `<+secret.getValue()>` expressions, so your organization and project were filled in when the agent was provisioned, and the agent reads the execution ID from the `HARNESS_EXECUTION_ID` environment variable. The agent talks to Harness through the built-in Harness MCP server, and `account.harnessAnthropic` is the Harness-managed model connector, so no API keys are needed.
 
 ---
 
 ### Step 2: Run the Agent on Rollback
 1. From the module selection menu select **Continuous Delivery & GitOps** and open your pipeline
 2. In the **backend** stage **Execution**, toggle the **Rollback** view
-3. Hover between **Rolling Rollback** and **Close Failed Ticket**, click **+** and select **Add Step Group**
+3. Hover between **Rolling Rollback** and **Close Failed Ticket**, click **+**, select **Use template** and choose **Failure Analysis**
 
 | Input      | Value     | Notes |
 | ---------- | ----------------------  | ----- |
-| Name | <pre>`Failure Analysis`</pre>||
-| Enable container based execution | On | Worker Agents in CD stages run in a containerized step group |
-| Kubernetes Cluster | k8s-prod ||
-| Namespace | <pre>`devsecops-<project_id>`</pre>| The agent runs next to the application, so it can reach Prometheus |
+| Name | <pre>`Failure Analysis`</pre>| Keep this name, the ServiceNow template reads the agent's output from it |
 
-4. On the step group's **Advanced** tab, under **Failure Strategy**, set the action for **All Errors** to **Ignore** so the rollback always finishes, even if the agent can't
-5. Inside the step group click **Add Step**, select **Agents** in the right sidebar and then **Agent**
-
-| Input      | Value     | Notes |
-| ---------- | ----------------------  | ----- |
-| Name | <pre>`Failure Analyst`</pre>||
-| Agent | Failure Analyst ||
-| Version | Always use stable ||
-
-6. Click **Apply Changes**
-7. After the **Failure Analysis** step group, click **+**, select **Use template** and choose **ServiceNow Failure Analysis**
+4. Click **Apply Changes**. The template is a containerized step group on **k8s-prod** in your `devsecops-<project_id>` namespace, so the agent runs next to the application. It holds two steps: the **Agent** step **Failure Analyst**, using the stable version of the agent, and a **Run** step **Publish Analysis** that reads the agent's output file and exports **FAILURE_CATEGORY** and **FAILURE_SUMMARY** as output variables, because Agent step outputs are only exported in CI stages. Its failure strategy is **Ignore** so the rollback always finishes, even if the agent can't
+5. After the **Failure Analysis** step group, click **+**, select **Use template** and choose **ServiceNow Failure Analysis**
 
 | Input      | Value     | Notes |
 | ---------- | ----------------------  | ----- |
 | Name | <pre>`Record Failure Analysis`</pre>| Adds the agent's category and summary to the change request's work notes |
 
-8. On the step's **Advanced** tab set the **Failure Strategy** for **All Errors** to **Ignore**, so **Close Failed Ticket** still runs
-9. Apply the changes and **Save** the pipeline. The rollback steps are now **Canary Delete**, **Rolling Rollback**, **Failure Analysis**, **Record Failure Analysis** and **Close Failed Ticket**
+6. On the step's **Advanced** tab, under **Conditional Execution**, select **Always execute this step**, and set the **Failure Strategy** for **All Errors** to **Ignore**, so the work note is recorded even if the agent fails and **Close Failed Ticket** still runs
+7. Apply the changes and **Save** the pipeline. The rollback steps are now **Canary Delete**, **Rolling Rollback**, **Failure Analysis**, **Record Failure Analysis** and **Close Failed Ticket**
 
 ---
 
 ### Step 3: Run and Review
 1. Click **Run**, approve the change in ServiceNow and approve the Harness Approval steps as before
-2. The chaos experiment from Lab 9 makes Verify fail and Harness rolls the stage back
-3. Expand the **Failure Analysis** step group and open **Failure Analyst**. The logs show the agent querying Prometheus and reasoning about the results, and the **Output** tab shows **FAILURE_CATEGORY** and **FAILURE_SUMMARY**
+2. The **Canary Smoke Test** from Lab 9 fails and Harness rolls the stage back
+3. Expand the **Failure Analysis** step group and open **Failure Analyst**. The logs show the agent diagnosing the execution with the Harness MCP tools and reasoning about the results. Open **Publish Analysis**: its **Output** tab shows **FAILURE_CATEGORY** and **FAILURE_SUMMARY**, which the **Record Failure Analysis** step reads with `<+pipeline.stages.backend.spec.execution.rollbackSteps.Failure_Analysis.steps.Publish_Analysis.output.outputVariables.FAILURE_SUMMARY>`
 4. Open the change request in ServiceNow. The **Notes** tab has a work note from the Failure Analyst with the root cause, and the change is **Closed** with close code **Unsuccessful**
 
 ---
@@ -1140,19 +1010,21 @@ deny[sprintf("Node OSS Can't contain any critical vulnerability '%d'", [input.NO
 
 ### Step 3: Add Policy to Pipeline
 1. Open your pipeline
-2. Go to a previous execution and copy the **CRITICAL** output variable from the OWASP step like so:
+2. The OWASP step in the **Build** stage publishes the number of critical vulnerabilities it found as the **CRITICAL** output variable. You can see it on the step's **Output** tab of a previous execution. Its expression is
 
-![](https://lh7-us.googleusercontent.com/docsz/AD_4nXfYQ7ba5Q_cQ9xy2AFVZ5Mt0iZPYbyQDmBonp0pBQA13Z_IUeYdK8gRSbddtf_V3bSRfbhKWDbRSUVJTx3BTCc_VmwLIWyWLkdh89nLh0sEBA6fqQxTy0NADZ0YPZwCirNycRVGUQACdItaBotovPs5Hg6CmRpQHk5ysgV6RUlhSbIbkNxmHAo?key=cRG2cvp_PHVW0KG2Gq6Y_A)
+```
+<+pipeline.stages.Build.spec.execution.steps.OWASP.output.outputVariables.CRITICAL>
+```
 
 3. Select the **frontend** stage
-4. Before the **Rollout Deployment** Step Group, add a **Policy** type step
+4. Before the **Rollout Deployment** step, add a **Policy** type step
 
 | Input      | Value     | Notes |
 | ---------- | ----------------------  | ----- |
 | Name | <pre>`Policy - No Critical CVEs`</pre>||
 | Entity Type | Custom ||
 | Policy Set | Criticals Not Allowed | Make sure to select the Project tab |
-| Payload | <pre>`{"NODE_OSS_CRITICAL_COUNT": <variable>}`</pre>| Set the field type to Expression, then replace `<variable>` with the OWASP output variable CRITICAL path |
+| Payload | <pre>`{"NODE_OSS_CRITICAL_COUNT": <+pipeline.stages.Build.spec.execution.steps.OWASP.output.outputVariables.CRITICAL>}`</pre>| The OWASP **CRITICAL** output variable from the previous step |
 
 5. Click **Apply Changes**
 

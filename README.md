@@ -137,6 +137,7 @@ Navigate to the **Execution** tab and add the following steps:
 | Input      | Value     | Notes |
 | ---------- | ----------------------  | ----- |
 | Name | <pre>`Push to DockerHub`</pre>||
+| Registry Type | Third-Party Artifact Registry | The default is Artifact Registry; select Third-Party to choose a Docker connector |
 | Docker Connector | dockerhub ||
 | Docker Repository | <pre>`nikpap/harness-workshop`</pre>||
 | Tags | <pre>`<+variable.username>-<+pipeline.sequenceId>`</pre>| Click on the pin and select expression and paste the value |
@@ -874,6 +875,8 @@ Your project has been provisioned with a **Failure Analyst** Worker Agent (ident
 2. Select the **Custom** tab and open **Failure Analyst**
 3. Switch to the **YAML** tab. The definition is the following
 
+![Failure Analyst YAML](images/lab10-agent-yaml.png "Failure Analyst YAML")
+
 ```yaml
 agent:
   uses: harnessAI@1.0.0
@@ -933,13 +936,23 @@ agent:
 6. On the step's **Advanced** tab, under **Conditional Execution**, select **Always execute this step**, and set the **Failure Strategy** for **All Errors** to **Ignore**, so the work note is recorded even if the agent fails and **Close Failed Ticket** still runs
 7. Apply the changes and **Save** the pipeline. The rollback steps are now **Canary Delete**, **Rolling Rollback**, **Failure Analysis**, **Record Failure Analysis** and **Close Failed Ticket**
 
+![Rollback steps with Failure Analysis](images/lab10-rollback-studio.png "Rollback steps with Failure Analysis")
+
 ---
 
 ### Step 3: Run and Review
 1. Click **Run**, approve the change in ServiceNow and approve the Harness Approval steps as before
 2. The **Canary Smoke Test** from Lab 9 fails and Harness rolls the stage back
-3. Expand the **Failure Analysis** step group and open **Failure Analyst**. The logs show the agent diagnosing the execution with the Harness MCP tools and reasoning about the results. Open **Publish Analysis**: its **Output** tab shows **FAILURE_CATEGORY** and **FAILURE_SUMMARY**, which the **Record Failure Analysis** step reads with `<+pipeline.stages.backend.spec.execution.rollbackSteps.Failure_Analysis.steps.Publish_Analysis.output.outputVariables.FAILURE_SUMMARY>`
-4. Open the change request in ServiceNow. The **Notes** tab has a work note from the Failure Analyst with the root cause, and the change is **Closed** with close code **Unsuccessful**
+3. Expand the **Failure Analysis** step group, then expand **Failure Analyst** and open **failure_analyst_1**. The logs show the agent diagnosing the execution with the Harness MCP tools, reasoning about the results and finishing with its failure analysis summary
+
+![Failure Analyst logs](images/lab10-agent-run.png "Failure Analyst logs")
+
+4. Open **Publish Analysis**: its **Output** tab shows **FAILURE_CATEGORY** and **FAILURE_SUMMARY**, which the **Record Failure Analysis** step reads with `<+pipeline.stages.backend.spec.execution.rollbackSteps.Failure_Analysis.steps.Publish_Analysis.output.outputVariables.FAILURE_SUMMARY>`
+
+![Publish Analysis output](images/lab10-publish-output.png "Publish Analysis output")
+5. Open the change request in ServiceNow. The **Notes** tab has a work note from the Failure Analyst with the root cause, and the change is **Closed** with close code **Unsuccessful**
+
+![Failure Analyst work note](images/lab10-snow-worknote.png "Failure Analyst work note")
 
 ---
 

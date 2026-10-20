@@ -804,10 +804,7 @@ Your project has been provisioned with a **Canary Smoke Test** step template.
 | ---------- | ----------------------  | ----- |
 | Name | <pre>`Canary Smoke Test`</pre>||
 
-3. Click **Apply Changes**. The template is a **Shell Script** step that runs on the delegate. It finds the canary pod in your `devsecops-<project_id>` namespace and smoke tests it, and its failure strategy is **Rollback Stage**, so a failed smoke test rolls the stage back without waiting for a human
-
-> [!NOTE]
-> The template's `SIMULATE_FAILURE` environment variable is set to `true`, so the smoke test always fails with an HTTP 500 from the canary. That lets you see a rollback without breaking the application. Set it to `false` to let releases through again.
+3. Click **Apply Changes**. The template is a **Shell Script** step that runs on the delegate. It finds the canary pod in your `devsecops-<project_id>` namespace and smoke tests it, and its failure strategy is **Rollback Stage**, so a failed smoke test rolls the stage back without waiting for a human. The smoke test is set up to always fail, so you can see a rollback without breaking the application
 
 ---
 
@@ -836,7 +833,7 @@ Your project has been provisioned with a **Canary Smoke Test** step template.
 
 ### Step 3: Run and Review
 1. Click **Run**, approve the change in ServiceNow as in Lab 7 and approve the Harness Approval steps
-2. Once the canary is deployed, **Verify** analyses its Prometheus metrics over a 5 minute window and passes. **Canary Smoke Test** then fails with `FAILED: simulated failure, the canary returned HTTP 500 from /api/orders`
+2. Once the canary is deployed, **Verify** analyses its Prometheus metrics over a 5 minute window and passes. **Canary Smoke Test** then fails with `FAILED: the canary returned HTTP 500 from /api/orders`
 3. Harness rolls back the stage: **Canary Delete**, **Rolling Rollback** and then **Close Failed Ticket**. The release never reaches the stable deployment
 
 ![Canary Smoke Test rollback](images/lab9-rollback-run.png "Canary Smoke Test rollback")

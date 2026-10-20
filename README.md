@@ -1009,6 +1009,8 @@ deny[sprintf("Node OSS Can't contain any critical vulnerability '%d'", [input.NO
 1. Open your pipeline
 2. The OWASP step in the **Build** stage publishes the number of critical vulnerabilities it found as the **CRITICAL** output variable. You can see it on the step's **Output** tab of a previous execution. Its expression is
 
+![OWASP CRITICAL output variable](images/lab11-critical-output.png "OWASP CRITICAL output variable")
+
 ```
 <+pipeline.stages.Build.spec.execution.steps.OWASP.output.outputVariables.CRITICAL>
 ```
